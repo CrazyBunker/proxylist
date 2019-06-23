@@ -4,7 +4,6 @@ from proxylist import proxylist
 from cacheJson import cacheJson
 from jinja2 import Template
 import argparse
-import sys
 
 parser = argparse.ArgumentParser(description='Search proxy server and update pac file for firefox.')
 parser.add_argument('-c', '--config', default=".cache.json", help="Path to config file in format json")
