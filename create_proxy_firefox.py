@@ -1,13 +1,10 @@
 from proxylist import proxylist
 from cacheJson import cacheJson
 from jinja2 import Template
-
 isDone = True
 rewrite = False
-
 proxy = proxylist()
 cache = cacheJson('.cache.json')
-proxy.verbose = 5
 for domain in cache.json:
       cache.domain = domain
       proxy.url = domain
