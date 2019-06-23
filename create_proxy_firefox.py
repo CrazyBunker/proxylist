@@ -4,7 +4,8 @@ from jinja2 import Template
 proxy = proxylist()
 isDone = True
 rewrite = False
-#test = {'domain1': {'ip': 1123123, 'port': 2341}}
+
+
 with open('.cache.json') as cache:
      proxyForDomain = json.load(cache)
 for domain in proxyForDomain:
