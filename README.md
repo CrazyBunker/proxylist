@@ -6,3 +6,16 @@ At startup, checks the availability of the site through the saved proxy in the j
 
 ##### Proxy Sheet Source
 by default, proxy sheets are taken from the service http://api.foxtools.ru/v2/Help/Proxy
+
+#### Parameters
+- -u url:  proxy service - sites whis api for get proxy lists, default _http://api.foxtools.ru/v2/Proxy_
+- -c config:  path to cache file - keep configurations domains and used proxy server, format json, default _.cache.json_
+- -p packfile: path to pac file for firefox, default _./proxy.pac_
+- -t template: path to template file for pac? default _./proxy.pac.j2_
+
+#### Format json file configuration
+```
+{"https://www.domain.com": {"ip": "127.0.0.1", "port": "8080"}}
+```
+
+Be sure to specify 3rd level domains
