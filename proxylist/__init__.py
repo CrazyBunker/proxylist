@@ -44,9 +44,6 @@ class proxylist():
            summarizedType+=self.type[type]
            self.set_paramer({ 'type' :summarizedType})
 
-    def excCountry(self, country):
-        self.exc = country
-
     def __excludeFromResponse(self):
         jsonData = self.response()['response']['items']
         cleaned = [ i for i in jsonData if not i['country']['iso3166a2'] in self.exc ]
@@ -100,11 +97,11 @@ class proxylist():
             self.error[4] = "%s - %s" % (proxies['https'],e)
         else:
             if response.status_code == 200:
-                self.error[1] = "Verifi is done, used proxy from cache file"
+                self.error[1] = "Check is done, used proxy from cache file"
                 if self.verbose >= 1:
                     print(self.error[1])
                 return True
-        self.error[1] = "Verify is failed, start searchinng new proxy"
+        self.error[1] = "Check is failed, start searchinng new proxy"
         if self.verbose >= 1:
             print(self.error[1])
         if self.verbose >= 4:

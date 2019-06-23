@@ -13,7 +13,7 @@ parser.add_argument('-t', '--template', default="proxy.pac.j2", help="Path to te
 parser.add_argument('-v', '--verbose', default=0, type=int, help="Verbose output")
 args = parser.parse_args()
 
-isDone = True
+isDone = False
 rewrite = False
 proxy = proxylist(args.url)
 proxy.verbose = args.verbose
@@ -25,11 +25,11 @@ for domain in cache.json:
       proxy.url = domain
       if not proxy.testProxy(cache.data()):
           proxy.set_type(['HTTPS'])
-          proxy.excCountry(['RU'])
+          proxy.exc = ['RU']
           answer = proxy.verify()
           cache.writeItem(answer)
-      else:
-          isDone = False
+          isDone = True
+
 if isDone or rewrite:
      cache.saveToCacheFile()
      html = open(args.template).read()
