@@ -11,7 +11,8 @@ by default, proxy sheets are taken from the service http://api.foxtools.ru/v2/He
 - -u url:  proxy service - sites whis api for get proxy lists, default _http://api.foxtools.ru/v2/Proxy_
 - -c config:  path to cache file - keep configurations domains and used proxy server, format json, default _.cache.json_
 - -p packfile: path to pac file for firefox, default _./proxy.pac_
-- -t template: path to template file for pac? default _./proxy.pac.j2_
+- -t template: path to template file for pac, default _./proxy.pac.j2_
+- -v verbose: 0-5 verbose level output, default 0
 
 #### Format json file configuration
 ```
