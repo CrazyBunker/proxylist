@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# # -*- coding: utf-8 -*-
 from proxylist import proxylist
 from cacheJson import cacheJson
 from jinja2 import Template
