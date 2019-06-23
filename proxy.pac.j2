@@ -1,0 +1,5 @@
+function FindProxyForURL(url, host) {
+    {% for i in block %}if (shExpMatch(host, "*.{{i.split('.')[-2]}}.{{i.split('.')[-1]}}"))
+         return "PROXY {{block[i].ip}}:{{block[i].port}}";
+    {% endfor %}return "DIRECT";
+}
