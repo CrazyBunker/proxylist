@@ -1,15 +1,34 @@
+#!/usr/bin/env python
+# # -*- coding: utf-8 -*-
 import requests
+import sys
 class proxylist():
-    def __init__(self,url="http://api.foxtools.ru/v2/Proxy"):
-        self.url = url
+    def __init__(self,listurl="http://api.foxtools.ru/v2/Proxy"):
+        self.error = [ True for _ in range(6) ]
+        self.error[0] = ''
+        self.listurl = listurl
         self.args = {}
         self.type = {'None':0,'HTTP':1,'HTTPS':2,'SOCKS4':4, 'SOCKS5': 8,'All':15 }
         self.exc = {}
+        self.verbose = 0
     def __get_request__(self):
         self.args['available'] =  1
-        self.req = requests.post(self.url, data=self.args)
-        print('Get request')
-        return self.req
+        self.error[2] = "Get request %s" % (self.listurl)
+        if self.verbose >= 2:
+            print(self.error[2])
+        try:
+            self.req = requests.post(self.listurl, data=self.args, timeout=3)
+        except requests.exceptions.SSLError as e:
+            self.error[3] = "SSL Error for proxy list service"
+        except requests.exceptions.ConnectTimeout as e:
+            self.error[3] = "Connection timeout for proxy list service"
+        except requests.exceptions.ConnectionError as e:
+            self.error[3] = "Connection error for proxy list service"
+        else:
+            return self.req
+        if self.verbose >= 3:
+            print(self.error[3])
+        sys.exit(1)
 
     def response(self):
         resp = self.__get_request__()
@@ -32,44 +51,64 @@ class proxylist():
         jsonData = self.response()['response']['items']
         cleaned = [ i for i in jsonData if not i['country']['iso3166a2'] in self.exc ]
         return cleaned
-    def verify(self, url="https://www.linkedin.com", timeout=0.1):
+    def verify(self, timeout=0.1):
         verifyList = {}
         proxyList = self.__excludeFromResponse()
         while True:
              for proxyData in proxyList:
+                if self.verbose >= 5:
+                    print(self.error[5])
                 ip = proxyData['ip']
                 port = proxyData['port']
                 if proxyData['free'] == 'Yes' and proxyData['anonymity'] == 'HighKeepAlive':
                     proxies = {'https':'%s:%s'%(ip,port)}
                     try:
-                        response = requests.get(url=url, proxies=proxies, timeout=timeout)
-                    except requests.exceptions.ProxyError:
-                        continue
-                    except requests.exceptions.SSLError:
-                        continue
-                    except requests.exceptions.ConnectTimeout:
-                        continue
-                    if response.status_code == 200:
-                        verifyList[proxyData['uptime']] = {'ip': str(ip),'port': str(port)}
+                        response = requests.get(url=self.url, proxies=proxies, timeout=timeout)
+                    except requests.exceptions.ProxyError as e:
+                        self.error[5] = "%s - %s" % (proxies['https'],e)
+                    except requests.exceptions.SSLError as e:
+                        self.error[5] = "%s - %s" % (proxies['https'],e)
+                    except requests.exceptions.ConnectTimeout as e:
+                        self.error[5] = "%s - %s" % (proxies['https'],e)
+                    except requests.exceptions.ConnectionError as e:
+                        self.error[5] = "%s - %s" % (proxies['https'],e)
+                    else:
+                        if response.status_code == 200:
+                            verifyList[proxyData['uptime']] = {'ip': str(ip),'port': str(port)}
              if len(verifyList) == 0:
                 timeout+=0.1
-                print(timeout)
+                self.error[2] = "Next timeout is %s" % (str(timeout))
+                if self.verbose >= 2:
+                    print(self.error[2])
              else:
                 winner = sorted(verifyList)[0]
+                self.error[1] = "Proxy for use %s" % (verifyList[winner])
+                if self.verbose >= 1:
+                    print(self.error[1])
                 break
         return verifyList[winner]
 
-    def testProxy(self,url,ip,port):
-        proxies = {'https': '%s:%s' % (ip, port)}
+    def testProxy(self, proxy):
+        proxies = {'https': '%s:%s' % (proxy['ip'], proxy['port'])}
         try:
-            response = requests.get(url=url, proxies=proxies)
-        except requests.exceptions.ProxyError:
-            return False
-        except requests.exceptions.SSLError:
-            return False
-        except requests.exceptions.ConnectTimeout:
-            return False
-        if response.status_code == 200:
-            return True
+            response = requests.get(url=self.url, proxies=proxies, timeout=3)
+        except requests.exceptions.ProxyError as e:
+            self.error[4] = "%s - %s" % (proxies['https'],e)
+        except requests.exceptions.SSLError as e:
+            self.error[4] = "%s - %s" % (proxies['https'],e)
+        except requests.exceptions.ConnectTimeout as e:
+            self.error[4] = "%s - %s" % (proxies['https'],e)
+        else:
+            if response.status_code == 200:
+                self.error[1] = "Verifi is done, used proxy from cache file"
+                if self.verbose >= 1:
+                    print(self.error[1])
+                return True
+        self.error[1] = "Verify is failed, start searchinng new proxy"
+        if self.verbose >= 1:
+            print(self.error[1])
+        if self.verbose >= 4:
+            print(self.error[4])
+        return False
 
 
