@@ -1,5 +1,4 @@
 import json
-import os
 class cacheJson ():
     def __init__(self,cacheFile):
         self.cacheFile = cacheFile
