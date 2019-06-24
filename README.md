@@ -20,3 +20,19 @@ by default, proxy sheets are taken from the service http://api.foxtools.ru/v2/He
 ```
 
 Be sure to specify 3rd level domains
+
+
+### Installing dependent libraries
+```
+pip install -r requirements.txt --upgrade
+```
+
+### Running script
+* Via cron:
+```
+30 */3 * * * python /home/user/git/proxylist/create_proxy_firefox.py --template /home/user/git/proxylist/proxy.pac.j2 --config /home/user/git/proxylist/.cache.json --pac /home/user/.proxy.pac
+```
+* Manually:
+ ```
+ python /home/user/git/proxylist/create_proxy_firefox.py --template /home/user/git/proxylist/proxy.pac.j2 --config /home/user/git/proxylist/.cache.json --verbose 5 --pac /home/user/.proxy.pac
+ ```
