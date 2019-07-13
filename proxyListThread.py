@@ -30,24 +30,30 @@ class Worker(threading.Thread):
         try:
             if answer.status_code == 200:
                 t1 = time()
-                self.timing[int(t1 - t0)] = {'ip': str(ip), 'port': str(port)}
-                print("%s - %s" % (proxies, self.proxyList.url))
+                self.timing[int((t1 - t0)*100)] = {'ip': str(ip), 'port': str(port)}
+                if self.proxyList.verbose > 2:
+                    print("%s - %s" % (proxies, self.proxyList.url))
         except AttributeError:
-            print(answer)
+            if self.proxyList.verbose > 3:
+                print(answer)
 
 class proxylist():
-    def __init__(self, listurl="http://api.foxtools.ru/v2/Proxy"):
+    def __init__(self, listurl):
         self.listurl = listurl
         self.args = {}
         self.type = {'None':0,'HTTP':1,'HTTPS':2,'SOCKS4':4, 'SOCKS5': 8,'All':15 }
         self.url = ""
         self.work_queue = queue.Queue()
+        self.listForService = []
+        self.oldwinner = {"ip": "127.0.0.1", "port": "3128"}
+        self.answer = ""
+        self.verbose = 0
     def __getRequest__(self,url, args={}, proxies={},timeout=3):
         try:
             if len(args) == 0:
-                req = requests.get(url, proxies=proxies, timeout=timeout, verify=False)
+                req = requests.get(url, proxies=proxies, timeout=timeout)
             else:
-                req = requests.post(url, data=args, timeout=timeout)
+                req = requests.post(url, data=args, proxies=proxies, timeout=timeout)
         except requests.exceptions.SSLError as e:
             error = "SSL Error for proxy list service"
         except requests.exceptions.ConnectTimeout as e:
@@ -56,6 +62,8 @@ class proxylist():
             error = "Connection error for proxy list service"
         except requests.exceptions.ReadTimeout:
             error = "Connection timeout for proxy list service"
+        except requests.exceptions.InvalidURL:
+            error = "InvalidURL"
         else:
             return req
         return error
@@ -70,22 +78,27 @@ class proxylist():
            summarizedType+=self.type[type]
            self.set_paramer({ 'type' :summarizedType})
 
-    def __getProxyList(self):
-        try:
-            answer = self.__getRequest__(self.listurl,self.args)
-            response=answer.json()
-        except:
-            print(answer)
-            sys.exit(1)
-        return response
+    def getProxyList(self):
+        for i in self.listForService:
+            if type(self.answer) == str:
+                if self.verbose > 2:
+                    print("Update proxy cache, used proxy %s" % (i))
+                self.answer = self.__getRequest__(self.listurl,self.args, {"https": i},10)
+            try:
+                response = self.answer.json()
+                return response
+            except:
+                if self.verbose > 2:
+                    print("Update is false")
+        sys.exit(1)
 
-    def __excludeFromResponse(self):
-        jsonData = self.__getProxyList()['response']['items']
+    def converter(self):
+        jsonData = self.getProxyList()['response']['items']
         cleaned = [ i for i in jsonData if not i['country']['iso3166a2'] in self.exc ]
         return cleaned
 
     def verify(self):
-        proxyList = self.__excludeFromResponse()
+        proxyList = self.converter(self.getProxyList())
         workerthreadlist = []
         proxyVerifedList = {}
         for proxyData in proxyList:
@@ -98,20 +111,25 @@ class proxylist():
             workerthreadlist[x].join()
         for x in range(len(proxyList)):
             proxyVerifedList.update(workerthreadlist[x].timing)
-
-        winner = sorted(proxyVerifedList)[0]
-        print("Proxy for use %s" % (proxyVerifedList[winner]))
-        return proxyVerifedList[winner]
+        winner = "Cache"
+        if len(proxyVerifedList) > 0:
+            winner = sorted(proxyVerifedList)[0]
+            self.oldwinner = proxyVerifedList[winner]
+        if self.verbose > 0:
+            print("Proxy for use %s - timeout: %s" % (self.oldwinner, winner))
+        return self.oldwinner
 
     def testProxy(self, proxy):
         proxies = {'https': '%s:%s' % (proxy['ip'], proxy['port'])}
-        answer = self.__getRequest__(self.url, "", proxies, 20)
+        answer = self.__getRequest__(self.url, "", proxies, 5)
         try:
              if answer.status_code == 200:
-                print("Check is done, used proxy from cache file")
+                if self.verbose > 1:
+                    print("Check is done, used proxy from cache file")
                 return True
         except AttributeError:
             print(answer)
-        print("Check is failed, start searchinng new proxy")
+        if self.verbose > 1:
+            print("Check is failed, start searchinng new proxy")
         return False
 
