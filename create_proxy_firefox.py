@@ -14,8 +14,8 @@ parser.add_argument('-v', '--verbose', default=0, type=int, help="Verbose output
 args = parser.parse_args()
 
 class htmlweb(proxylist):
-    def converter(self):
-        jsonData = self.getProxyList()
+    def converter(self, jsonData):
+        # Used format : {"ip" : <ip address>, "port": <port>}
         cleaned = [{"ip": i['name'].split(":")[0], "port": i['name'].split(":")[1]} for i in [ jsonData[i] for i in jsonData ][1:-1]]
         return cleaned
 
@@ -24,8 +24,6 @@ isDone = False
 rewrite = False
 proxy = htmlweb(args.url)
 proxy.verbose = args.verbose
-if proxy.verbose > 5:
-    proxy.verbose = 5
 cache = cacheJson(args.config)
 cache.domain = list(cache.json)[0]
 proxy.oldwinner = cache.data()
@@ -39,8 +37,6 @@ for domain in cache.json:
           answer = proxy.verify()
           cache.writeItem(answer)
           isDone = True
-
-
 if isDone or rewrite:
      cache.saveToCacheFile()
      html = open(args.template).read()
